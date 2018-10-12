@@ -7,7 +7,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 
+import response.ErrorResponse;
 import response.Response;
+import response.SuccessResponse;
 import service.ClearService;
 
 public class ClearHandler extends Handler implements HttpHandler {
@@ -24,15 +26,15 @@ public class ClearHandler extends Handler implements HttpHandler {
         response = clearService.clear();
 
         // Determine status of response
-        if (response.isSuccess()) {
+        if (response.getClass() == SuccessResponse.class) {
             httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, 0);
             OutputStream responseBody = httpExchange.getResponseBody();
-            writeResponse(gson.toJson(response.getSuccessResponse()), responseBody);
+            writeResponse(gson.toJson(((SuccessResponse) response).getMessage()), responseBody);
             responseBody.close();
         }
         else {
             // User error
-            if (response.getErrorType().equals("user")) {
+            if (((ErrorResponse) response).getErrorType().equals("user")) {
                 httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_BAD_REQUEST, 0);
             }
             // Server error
@@ -40,7 +42,7 @@ public class ClearHandler extends Handler implements HttpHandler {
                 httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_INTERNAL_ERROR, 0);
             }
             OutputStream responseBody = httpExchange.getResponseBody();
-            writeResponse(gson.toJson(response.getErrorResponse()), responseBody);
+            writeResponse(gson.toJson(((ErrorResponse) response).getMessage()), responseBody);
             responseBody.close();
         }
 

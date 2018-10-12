@@ -7,9 +7,12 @@ import dao.AuthTokenDao;
 import dao.Dao.*;
 import dao.PersonDao;
 import model.Person;
+import response.ErrorResponse;
 import response.PersonResponse;
 import response.PersonsResponse;
 import response.Response;
+
+//TODO fix multi-level try structure
 
 /**
  * Service to obtain Person data.
@@ -40,7 +43,7 @@ public class PersonService extends Service {
                 }
                 catch (DoesNotExistException e) {
                     authTokenDao.closeConnection(false);
-                    return new Response("Invalid auth token.", "user");
+                    return new ErrorResponse("Invalid auth token.", "user");
                 }
 
                 // Get the person
@@ -51,30 +54,30 @@ public class PersonService extends Service {
                 }
                 catch (DoesNotExistException e) {
                     personDao.closeConnection(false);
-                    return new Response("Invalid personID parameter.", "user");
+                    return new ErrorResponse("Invalid personID parameter.", "user");
                 }
 
                 // Make sure auth token and user match up
                 if (!person.getDescendant().equals(authUsername)) {
                     personDao.closeConnection(false);
-                    return new Response("Requested person does not belong to this user.",
-                                        "user");
+                    return new ErrorResponse("Requested person does not belong to this user.", 
+                    		"user");
                 }
             }
             catch (DatabaseException e) {
                 logger.log(Level.SEVERE, e.getMessage(), e);
                 personDao.closeConnection(false);
-                return new Response("Internal server error.", "server");
+                return new ErrorResponse("Internal server error.", "server");
             }
 
             // Close connection & return successfully
             personDao.closeConnection(true);
-            return new Response(new PersonResponse(person));
+            return new PersonResponse(person);
 
         }
         catch (DatabaseException e) {
             logger.log(Level.SEVERE, e.getMessage(), e);
-            return new Response("Internal server error.", "server");
+            return new ErrorResponse("Internal server error.", "server");
         }
         finally {
             logger.exiting("PersonResponse", "person");
@@ -104,7 +107,7 @@ public class PersonService extends Service {
                     username = authTokenDao.getUsername(authToken);
                 } catch (DoesNotExistException e) {
                     authTokenDao.closeConnection(false);
-                    return new Response("Invalid auth token.", "user");
+                    return new ErrorResponse("Invalid auth token.", "user");
                 }
 
                 // Get Persons associated with the user
@@ -115,16 +118,16 @@ public class PersonService extends Service {
             catch (DatabaseException e) {
                 logger.log(Level.SEVERE, e.getMessage(), e);
                 authTokenDao.closeConnection(false);
-                return new Response("Internal server error.", "server");
+                return new ErrorResponse("Internal server error.", "server");
             }
 
             // Close connection & return a response
             personDao.closeConnection(true);
-            return new Response(new PersonsResponse(persons));
+            return new PersonsResponse(persons);
         }
         catch (DatabaseException e) {
             logger.log(Level.SEVERE, e.getMessage(), e);
-            return new Response("Internal server error.", "server");
+            return new ErrorResponse("Internal server error.", "server");
         }
         finally {
             logger.exiting("PersonsService", "persons");

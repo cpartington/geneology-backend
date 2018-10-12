@@ -10,6 +10,7 @@ import java.net.HttpURLConnection;
 
 import response.ErrorResponse;
 import response.Response;
+import response.SuccessResponse;
 import service.FillService;
 
 public class FillHandler extends Handler implements HttpHandler {
@@ -35,7 +36,7 @@ public class FillHandler extends Handler implements HttpHandler {
         if (urlData.length < NO_GEN_LENGTH || urlData.length > YES_GEN_LENGTH) {
             httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_BAD_REQUEST, 0);
             OutputStream responseBody = httpExchange.getResponseBody();
-            writeResponse(gson.toJson(new ErrorResponse("Invalid fill request.")), responseBody);
+            writeResponse(gson.toJson(new ErrorResponse("Invalid fill request.", "user")), responseBody);
             responseBody.close();
         }
         else {
@@ -50,20 +51,20 @@ public class FillHandler extends Handler implements HttpHandler {
                 catch (NumberFormatException e) {
                     httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_BAD_REQUEST, 0);
                     OutputStream responseBody = httpExchange.getResponseBody();
-                    writeResponse(gson.toJson(new ErrorResponse("Invalid generation parameter.")), responseBody);
+                    writeResponse(gson.toJson(new ErrorResponse("Invalid generation parameter.", "user")), responseBody);
                     responseBody.close();
                 }
                 response = fillService.fill(urlData[USERNAME], generations);
             }
 
-            if (response.isSuccess()) {
+            if (response.getClass() == SuccessResponse.class) {
                 httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, 0);
                 OutputStream responseBody = httpExchange.getResponseBody();
-                writeResponse(gson.toJson(response.getSuccessResponse()), responseBody);
+                writeResponse(gson.toJson(((SuccessResponse) response).getMessage()), responseBody);
                 responseBody.close();
             } else {
                 // User error
-                if (response.getErrorType().equals("user")) {
+                if (((ErrorResponse) response).getErrorType().equals("user")) {
                     httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_BAD_REQUEST, 0);
                 }
                 // Server error
@@ -71,7 +72,7 @@ public class FillHandler extends Handler implements HttpHandler {
                     httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_INTERNAL_ERROR, 0);
                 }
                 OutputStream responseBody = httpExchange.getResponseBody();
-                writeResponse(gson.toJson(response.getErrorResponse()), responseBody);
+                writeResponse(gson.toJson(((ErrorResponse) response).getMessage()), responseBody);
                 responseBody.close();
             }
         }

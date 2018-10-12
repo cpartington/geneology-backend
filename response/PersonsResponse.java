@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 import model.Person;
 
-public class PersonsResponse extends GenericResponse {
+public class PersonsResponse extends Response {
 
     /** Array of Person objects */
     private ArrayList<Person> persons;

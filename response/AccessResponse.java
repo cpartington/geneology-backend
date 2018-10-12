@@ -3,7 +3,7 @@ package response;
 /**
  * Response sent by the LoginService.
  */
-public class AccessResponse extends GenericResponse {
+public class AccessResponse extends Response {
 
     /** Authorization token for the user's session */
     private String authToken;

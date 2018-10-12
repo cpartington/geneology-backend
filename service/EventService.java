@@ -6,10 +6,13 @@ import java.util.logging.Level;
 import dao.AuthTokenDao;
 import dao.Dao.*;
 import dao.EventDao;
+import response.ErrorResponse;
 import response.EventResponse;
 import response.EventsResponse;
 import response.Response;
 import model.Event;
+
+// TODO fix multi-level try structure
 
 /**
  * Service to obtain Event data.
@@ -40,7 +43,7 @@ public class EventService extends Service {
                 }
                 catch (DoesNotExistException e) {
                     authTokenDao.closeConnection(false);
-                    return new Response("Invalid auth token.", "user");
+                    return new ErrorResponse("Invalid auth token.", "user");
                 }
 
                 // Get the event
@@ -50,29 +53,29 @@ public class EventService extends Service {
                 }
                 catch (DoesNotExistException e) {
                     eventDao.closeConnection(false);
-                    return new Response("Invalid eventID parameter.", "user");
+                    return new ErrorResponse("Invalid eventID parameter.", "user");
                 }
 
                 // Make sure authToken and user match up
                 if (!event.getDescendant().equals(username)) {
                     eventDao.closeConnection(false);
-                    return new Response("Requested event does not belong to this user.",
+                    return new ErrorResponse("Requested event does not belong to this user.",
                                              "user");
                 }
             }
             catch (DatabaseException e) {
                 logger.log(Level.SEVERE, e.getMessage(), e);
                 eventDao.closeConnection(false);
-                return new Response("Internal server error.", "server");
+                return new ErrorResponse("Internal server error.", "server");
             }
 
             // Return response if successful
             eventDao.closeConnection(true);
-            return new Response(new EventResponse(event));
+            return new EventResponse(event);
         }
         catch (DatabaseException e) {
             logger.log(Level.SEVERE, e.getMessage(), e);
-            return new Response("Internal server error.", "server");
+            return new ErrorResponse("Internal server error.", "server");
         }
         finally {
             logger.exiting("EventService", "event");
@@ -101,7 +104,7 @@ public class EventService extends Service {
                     username = authTokenDao.getUsername(authToken);
                 } catch (DoesNotExistException e) {
                     authTokenDao.closeConnection(false);
-                    return new Response("Invalid auth token.", "user");
+                    return new ErrorResponse("Invalid auth token.", "user");
                 }
 
                 // Get events associated with the user
@@ -112,16 +115,16 @@ public class EventService extends Service {
             catch (DatabaseException e) {
                 logger.log(Level.SEVERE, e.getMessage(), e);
                 eventDao.closeConnection(false);
-                return new Response("Internal server error.", "server");
+                return new ErrorResponse("Internal server error.", "server");
             }
 
             // Close connection & return a response
             eventDao.closeConnection(true);
-            return new Response(new EventsResponse(events));
+            return new EventsResponse(events);
         }
         catch (DatabaseException e) {
             logger.log(Level.SEVERE, e.getMessage(), e);
-            return new Response("Internal server error.", "server");
+            return new ErrorResponse("Internal server error.", "server");
         }
     }
 }

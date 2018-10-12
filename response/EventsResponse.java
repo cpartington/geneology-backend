@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 import model.Event;
 
-public class EventsResponse extends GenericResponse {
+public class EventsResponse extends Response {
 
     /** Array of event objects */
     private ArrayList<Event> events;

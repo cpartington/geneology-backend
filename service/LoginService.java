@@ -7,8 +7,11 @@ import dao.Dao.*;
 import dao.UserDao;
 import model.AuthToken;
 import response.AccessResponse;
+import response.ErrorResponse;
 import request.LoginRequest;
 import response.Response;
+
+// TODO fix multi-level try structure
 
 /**
  * Service to log in the user.
@@ -33,7 +36,7 @@ public class LoginService extends Service {
 
         // Make sure request is valid
         if (!isValidRequest(request)) {
-            return new Response("Request property missing or has invalid value.", "user");
+            return new ErrorResponse("Request property missing or has invalid value.", "user");
         }
 
         try {
@@ -43,13 +46,13 @@ public class LoginService extends Service {
                 // Make sure user exists
                 if (!userDao.find(username)) {
                     userDao.closeConnection(false);
-                    return new Response("Invalid username or password.", "user");
+                    return new ErrorResponse("Invalid username or password.", "user");
                 }
 
                 // Check username and password
                 if (!userDao.checkPassword(username, password)) {
                     userDao.closeConnection(false);
-                    return new Response("Invalid username or password.", "user");
+                    return new ErrorResponse("Invalid username or password.", "user");
                 }
 
                 // Get person ID
@@ -63,16 +66,16 @@ public class LoginService extends Service {
             } catch (DatabaseException e) {
                 logger.log(Level.SEVERE, e.getMessage(), e);
                 userDao.closeConnection(false);
-                return new Response("Internal server error.", "server");
+                return new ErrorResponse("Internal server error.", "server");
             }
 
             // Close connection & return success message
             authTokenDao.closeConnection(true);
-            return new Response(new AccessResponse(newToken.getToken(), username, personID));
+            return new AccessResponse(newToken.getToken(), username, personID);
         }
         catch (DatabaseException e) {
             logger.log(Level.SEVERE, e.getMessage(), e);
-            return new Response("Internal server error.", "server");
+            return new ErrorResponse("Internal server error.", "server");
         }
         finally {
             logger.exiting("LoginResponse", "login");

@@ -70,7 +70,6 @@ public class AuthTokenDao extends Dao {
      * @throws DoesNotExistException if the authToken doesn't exist
      */
     public String getUsername(String authToken) throws DatabaseException, DoesNotExistException {
-        // TODO getUsername
         String username = null;
         int rowCount = 0;
 

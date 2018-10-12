@@ -9,7 +9,11 @@ import dao.Dao.*;
 import model.Event;
 import model.Person;
 import model.User;
+import response.ErrorResponse;
 import response.Response;
+import response.SuccessResponse;
+
+//TODO fix multi-level try structure
 
 /**
  * Service to fill database with Persons and Events.
@@ -37,7 +41,7 @@ public class FillService extends Service {
 
         // Make sure request is valid
         if (generations < 0) {
-            return new Response("Invalid generations parameter.", "user");
+            return new ErrorResponse("Invalid generations parameter.", "user");
         }
 
         try {
@@ -46,7 +50,7 @@ public class FillService extends Service {
                 // Check that user exists
                 if (!userDao.find(username)) {
                     userDao.closeConnection(false);
-                    return new Response("Invalid username parameter.", "user");
+                    return new ErrorResponse("Invalid username parameter.", "user");
                 }
                 user = userDao.get(username);
 
@@ -73,7 +77,7 @@ public class FillService extends Service {
                 catch (IOException e) {
                     logger.log(Level.SEVERE, e.getMessage(), e);
                     userDao.closeConnection(false);
-                    return new Response("Internal server error.", "server");
+                    return new ErrorResponse("Internal server error.", "server");
                 }
 
                 // Put data in database with LoadService functions
@@ -85,20 +89,25 @@ public class FillService extends Service {
             catch (DatabaseException e) {
                 logger.log(Level.SEVERE, e.getMessage(), e);
                 userDao.closeConnection(false);
-                return new Response("Internal server error.", "server");
+                return new ErrorResponse("Internal server error.", "server");
             }
 
             // Close connection & return successfully
             eventDao.closeConnection(true);
-            return new Response(personCount, eventCount);
+            return new SuccessResponse(makeResponse(personCount, eventCount));
 
         }
         catch (DatabaseException e) {
             logger.log(Level.SEVERE, e.getMessage(), e);
-            return new Response("Internal server error.", "server");
+            return new ErrorResponse("Internal server error.", "server");
         }
         finally {
             logger.exiting("FillService", "fill");
         }
+    }
+    
+    private String makeResponse(int persons, int events) {
+    	return String.format("Successfully added %d persons and %d events to the database.", 
+    			persons, events);
     }
 }

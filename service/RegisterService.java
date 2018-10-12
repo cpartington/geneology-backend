@@ -12,7 +12,10 @@ import model.Person;
 import model.User;
 import request.RegisterRequest;
 import response.AccessResponse;
+import response.ErrorResponse;
 import response.Response;
+
+//TODO fix multi-level try structure
 
 /**
  * Service to register the user.
@@ -41,7 +44,7 @@ public class RegisterService extends Service {
 
         // Make sure request is valid
         if (!isValidRequest(request)) {
-            return new Response("Invalid request body.", "user");
+            return new ErrorResponse("Invalid request body.", "user");
         }
 
         try {
@@ -53,7 +56,7 @@ public class RegisterService extends Service {
                 username = request.getUsername();
                 if (userDao.find(username)) {
                     userDao.closeConnection(false);
-                    return new Response("Username already exists.", "user");
+                    return new ErrorResponse("Username already exists.", "user");
                 }
 
                 // Create new account
@@ -62,7 +65,7 @@ public class RegisterService extends Service {
                 person = new Person(username, user.getFirstName(), user.getLastName(), user.getGender());
                 user.setPersonID(person.getPersonID());
                 if (!isValidUser(user) || !isValidPerson(person)) {
-                    return new Response("Invalid request body.", "user");
+                    return new ErrorResponse("Invalid request body.", "user");
                 }
                 userDao.add(user);
                 personDao = new PersonDao(userDao.getConnection());
@@ -80,7 +83,7 @@ public class RegisterService extends Service {
                 catch (IOException e) {
                     logger.log(Level.SEVERE, e.getMessage(), e);
                     userDao.closeConnection(false);
-                    return new Response("Internal server error.", "server");
+                    return new ErrorResponse("Internal server error.", "server");
                 }
 
                 // Add to database with LoadService functions
@@ -90,7 +93,7 @@ public class RegisterService extends Service {
                 int eventCount = loadService.addEvents(eventDao, events);
 
                 if (personCount == INVALID_DATA || eventCount == INVALID_DATA) {
-                    return new Response("Invalid generated data.", "server");
+                    return new ErrorResponse("Invalid generated data.", "server");
                 }
 
                 // Log in user
@@ -101,16 +104,16 @@ public class RegisterService extends Service {
             } catch (DatabaseException e) {
                 logger.log(Level.SEVERE, e.getMessage(), e);
                 userDao.closeConnection(false);
-                return new Response("Internal server error.", "server");
+                return new ErrorResponse("Internal server error.", "server");
             }
 
             // Close connection & return success
             authTokenDao.closeConnection(true);
-            return new Response(new AccessResponse(authToken.getToken(), username, person.getPersonID()));
+            return new AccessResponse(authToken.getToken(), username, person.getPersonID());
         }
         catch (DatabaseException e) {
             logger.log(Level.SEVERE, e.getMessage(), e);
-            return new Response("Internal server error.", "server");
+            return new ErrorResponse("Internal server error.", "server");
         }
         finally {
             logger.exiting("RegisterService", "register");
@@ -122,6 +125,7 @@ public class RegisterService extends Service {
                 registerRequest.getEmail() == null || registerRequest.getFirstName() == null ||
                 registerRequest.getLastName() == null || registerRequest.getGender() == null)
             return false;
-        else return true;
+        else 
+        	return true;
     }
 }

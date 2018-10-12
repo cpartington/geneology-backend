@@ -3,7 +3,11 @@ package service;
 import java.util.logging.Level;
 
 import dao.Dao;
+import response.ErrorResponse;
 import response.Response;
+import response.SuccessResponse;
+
+//TODO fix multi-level try structure
 
 /**
  * Service to delete all data from the database.
@@ -30,17 +34,17 @@ public class ClearService extends Service {
             } catch (Dao.DatabaseException e) {
                 logger.log(Level.SEVERE, e.getMessage(), e);
                 dao.closeConnection(false);
-                return new Response("Internal server error.", "server");
+                return new ErrorResponse("Internal server error.", "server");
             }
 
             // Close connection & return successful response
             dao.closeConnection(true);
-            return new Response(true);
+            return new SuccessResponse("Clear succeeded.");
 
         }
         catch (Dao.DatabaseException e) {
             logger.log(Level.SEVERE, e.getMessage(), e);
-            return new Response("Internal server error.", "server");
+            return new ErrorResponse("Internal server error.", "server");
         }
         finally {
             logger.exiting("ClearService", "clear");

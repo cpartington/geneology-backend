@@ -11,7 +11,11 @@ import model.Event;
 import model.Person;
 import model.User;
 import request.LoadRequest;
+import response.ErrorResponse;
 import response.Response;
+import response.SuccessResponse;
+
+//TODO fix multi-level try structure
 
 /**
  * Service that loads data into the database.
@@ -33,7 +37,7 @@ public class LoadService extends Service {
         int eventCount = 0;
 
         if (!isValidRequest(request)) {
-            return new Response("Invalid request body.", "user");
+            return new ErrorResponse("Invalid request body.", "user");
         }
 
         try {
@@ -58,7 +62,7 @@ public class LoadService extends Service {
                 // Make sure data is valid
                 if (userCount == INVALID_DATA || personCount == INVALID_DATA || eventCount == INVALID_DATA) {
                     userDao.closeConnection(false);
-                    return new Response("Invalid request body.", "user");
+                    return new ErrorResponse("Invalid request body.", "user");
                 }
 
             }
@@ -66,18 +70,19 @@ public class LoadService extends Service {
                 logger.log(Level.SEVERE, e.getMessage(), e);
                 userDao.closeConnection(false);
                 if (e.getMessage().startsWith("Already exists"))
-                    return new Response("Invalid request body.", "user");
-                else return new Response("Internal server error.", "server");
+                    return new ErrorResponse("Invalid request body.", "user");
+                else 
+                	return new ErrorResponse("Internal server error.", "server");
             }
 
             // Close connection, commit, & return successfully
             eventDao.closeConnection(true);
-            return new Response(userCount, personCount, eventCount);
+            return new SuccessResponse(makeResponse(userCount, personCount, eventCount));
 
         }
         catch (DatabaseException e) {
             logger.log(Level.SEVERE, e.getMessage(), e);
-            return new Response("Internal server error.", "server");
+            return new ErrorResponse("Internal server error.", "server");
         }
         finally {
             logger.exiting("LoadService", "load");
@@ -152,5 +157,10 @@ public class LoadService extends Service {
                 loadRequest.getEvents() == null)
             return false;
         else return true;
+    }
+    
+    private String makeResponse(int users, int persons, int events) {
+    	return String.format("Successfully added %d users, %d persons, and %d events to the database.",
+                users, persons, events);
     }
 }
