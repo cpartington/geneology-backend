@@ -1,0 +1,11 @@
+/ClearHandler.class
+/EventHandler.class
+/FileHandler.class
+/FillHandler.class
+/Handler$BadRequestException.class
+/Handler$ServerErrorException.class
+/Handler.class
+/LoadHandler.class
+/LoginHandler.class
+/PersonHandler.class
+/RegisterHandler.class

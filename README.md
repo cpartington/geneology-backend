@@ -1,0 +1,1 @@
+This is part of a app project developed as the final project in a college course, which I am refactoring and improving. It is a server using HTTP meant to interact with an app by use of a server proxy. The server stores geneology-related data in an SQLite database, accessed through `java.sql`.
