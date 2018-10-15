@@ -13,6 +13,7 @@ import java.net.HttpURLConnection;
 import request.LoadRequest;
 import response.ErrorResponse;
 import response.Response;
+import response.SuccessResponse;
 import service.LoadService;
 
 public class LoadHandler extends Handler implements HttpHandler {
@@ -26,7 +27,7 @@ public class LoadHandler extends Handler implements HttpHandler {
         if (!httpExchange.getRequestMethod().toLowerCase().equals("post")) {
             httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_BAD_REQUEST, 0);
             OutputStream responseBody = httpExchange.getResponseBody();
-            writeResponse(gson.toJson(new ErrorResponse("Invalid request body.")), responseBody);
+            writeResponse(gson.toJson(new ErrorResponse("Invalid request body.", "user")), responseBody);
             responseBody.close();
         }
         else {
@@ -39,7 +40,7 @@ public class LoadHandler extends Handler implements HttpHandler {
             catch (JsonSyntaxException e) {
                 httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_BAD_REQUEST, 0);
                 OutputStream responseBody = httpExchange.getResponseBody();
-                writeResponse(gson.toJson(new ErrorResponse("Invalid request body.")), responseBody);
+                writeResponse(gson.toJson(new ErrorResponse("Invalid request body.", "user")), responseBody);
                 responseBody.close();
             }
 
@@ -48,14 +49,14 @@ public class LoadHandler extends Handler implements HttpHandler {
             Response response = loadService.load(loadRequest);
 
             // Check for success
-            if (response.isSuccess()) {
+            if (response.getClass() == SuccessResponse.class) {
                 httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, 0);
                 OutputStream responseBody = httpExchange.getResponseBody();
-                writeResponse(gson.toJson(response.getSuccessResponse()), responseBody);
+                writeResponse(gson.toJson(((SuccessResponse) response).getMessage()), responseBody);
                 responseBody.close();
             } else {
-                // User error
-                if (response.getErrorType().equals("user")) {
+            	// User error
+                if (((ErrorResponse) response).getErrorType().equals("user")) {
                     httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_BAD_REQUEST, 0);
                 }
                 // Server error
@@ -63,7 +64,7 @@ public class LoadHandler extends Handler implements HttpHandler {
                     httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_INTERNAL_ERROR, 0);
                 }
                 OutputStream responseBody = httpExchange.getResponseBody();
-                writeResponse(gson.toJson(response.getErrorResponse()), responseBody);
+                writeResponse(gson.toJson(((ErrorResponse) response).getMessage()), responseBody);
                 responseBody.close();
             }
         }

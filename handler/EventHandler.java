@@ -8,6 +8,8 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 
 import response.ErrorResponse;
+import response.EventResponse;
+import response.EventsResponse;
 import response.Response;
 import service.EventService;
 
@@ -28,7 +30,7 @@ public class EventHandler extends Handler implements HttpHandler {
         if (!requestHeaders.containsKey("Authorization")) {
             httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_BAD_REQUEST, 0);
             OutputStream responseBody = httpExchange.getResponseBody();
-            writeResponse(gson.toJson(new ErrorResponse("Invalid auth token.")), responseBody);
+            writeResponse(gson.toJson(new ErrorResponse("Invalid auth token.", "user")), responseBody);
             responseBody.close();
         }
         else {
@@ -47,19 +49,19 @@ public class EventHandler extends Handler implements HttpHandler {
             }
 
             // Determine status of response
-            if (response.isSuccess()) {
+            if (response.getClass() != ErrorResponse.class) {
                 httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, 0);
                 OutputStream responseBody = httpExchange.getResponseBody();
 
                 if (events)
-                    writeResponse(gson.toJson(response.getEventsResponse()), responseBody);
+                    writeResponse(gson.toJson((EventsResponse) response), responseBody);
                 else
-                    writeResponse(gson.toJson(response.getEventResponse()), responseBody);
+                    writeResponse(gson.toJson((EventResponse) response), responseBody);
                 responseBody.close();
             }
             else {
                 // User error
-                if (response.getErrorType().equals("user")) {
+                if (((ErrorResponse) response).getErrorType().equals("user")) {
                     httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_BAD_REQUEST, 0);
                 }
                 // Server error
@@ -67,7 +69,7 @@ public class EventHandler extends Handler implements HttpHandler {
                     httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_INTERNAL_ERROR, 0);
                 }
                 OutputStream responseBody = httpExchange.getResponseBody();
-                writeResponse(gson.toJson(response.getErrorResponse()), responseBody);
+                writeResponse(gson.toJson(((ErrorResponse) response).getMessage()), responseBody);
                 responseBody.close();
             }
         }

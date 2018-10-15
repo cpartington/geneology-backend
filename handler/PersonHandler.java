@@ -10,6 +10,8 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 
 import response.ErrorResponse;
+import response.PersonResponse;
+import response.PersonsResponse;
 import response.Response;
 import service.PersonService;
 
@@ -30,7 +32,7 @@ public class PersonHandler extends Handler implements HttpHandler {
         if (!requestHeaders.containsKey("Authorization")) {
             httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_BAD_REQUEST, 0);
             OutputStream responseBody = httpExchange.getResponseBody();
-            writeResponse(gson.toJson(new ErrorResponse("Invalid auth token.")), responseBody);
+            writeResponse(gson.toJson(new ErrorResponse("Invalid auth token.", "user")), responseBody);
             responseBody.close();
         }
         else {
@@ -49,19 +51,19 @@ public class PersonHandler extends Handler implements HttpHandler {
             }
 
             // Determine status of response
-            if (response.isSuccess()) {
+            if (response.getClass() != ErrorResponse.class) {
                 httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, 0);
                 OutputStream responseBody = httpExchange.getResponseBody();
 
                 if (persons)
-                    writeResponse(gson.toJson(response.getPersonsResponse()), responseBody);
+                    writeResponse(gson.toJson(((PersonsResponse) response).getPersons()), responseBody);
                 else
-                    writeResponse(gson.toJson(response.getPersonResponse()), responseBody);
+                    writeResponse(gson.toJson((PersonResponse) response), responseBody);
                 responseBody.close();
             }
             else {
-                // User error
-                if (response.getErrorType().equals("user")) {
+            	// User error
+                if (((ErrorResponse) response).getErrorType().equals("user")) {
                     httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_BAD_REQUEST, 0);
                 }
                 // Server error
@@ -69,7 +71,7 @@ public class PersonHandler extends Handler implements HttpHandler {
                     httpExchange.sendResponseHeaders(HttpURLConnection.HTTP_INTERNAL_ERROR, 0);
                 }
                 OutputStream responseBody = httpExchange.getResponseBody();
-                writeResponse(gson.toJson(response.getErrorResponse()), responseBody);
+                writeResponse(gson.toJson(((ErrorResponse) response).getMessage()), responseBody);
                 responseBody.close();
             }
         }
